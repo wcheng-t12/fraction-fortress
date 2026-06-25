@@ -208,7 +208,7 @@
     <div class="hud-item"><span id="livesDisplay">❤️❤️❤️❤️❤️</span></div>
     <div class="hud-item" style="flex-direction:column;align-items:flex-end;gap:2px;">
       <div class="hud-label" style="font-size:0.7rem">TIME LEFT</div>
-      <div class="hud-value" id="hudTimer">3:00</div>
+      <div class="hud-value" id="hudTimer">5:00</div>
       <div class="timer-bar-wrap" style="max-width:160px;width:160px;"><div class="timer-bar-bg"><div class="timer-bar" id="timerBar" style="width:100%"></div></div></div>
     </div>
     <button class="action-btn" onclick="toggleMusic()" style="min-width:36px;padding:6px 12px;" id="musicBtn">🎵</button>
@@ -310,7 +310,7 @@
   // ─── GAME STATE ───
   let G={};
   function initGameState(){
-    G={ round:1, maxRounds:10, score:0, lives:5, maxLives:5, totalTime:180, timeLeft:180, gameActive:false, roundActive:false, kills:0, mergesCount:0, wholeBonusCount:0, hand:[], maxHandSize:6, selectedCards:[], slots:[], enemies:[], enemySpawnQueue:[], spawnTimer:0, spawnInterval:0, enemiesThisRound:0, enemiesSpawned:0, projectiles:[], canvas:null, ctx:null, bgCanvas:null, bgCtx:null, W:0, H:0, path:[], animFrame:null, lastTime:0, timerInterval:null, };
+    G={ round:1, maxRounds:10, score:0, lives:5, maxLives:5, totalTime:300, timeLeft:300, gameActive:false, roundActive:false, kills:0, mergesCount:0, wholeBonusCount:0, hand:[], maxHandSize:6, selectedCards:[], slots:[], enemies:[], enemySpawnQueue:[], spawnTimer:0, spawnInterval:0, enemiesThisRound:0, enemiesSpawned:0, projectiles:[], canvas:null, ctx:null, bgCanvas:null, bgCtx:null, W:0, H:0, path:[], animFrame:null, lastTime:0, timerInterval:null, };
   }
 
   // ─── CANVAS ───
@@ -467,7 +467,17 @@
 
   // ─── ROUND ───
   function startRound(round){ G.round=round; G.roundActive=false; G.enemies=[]; G.projectiles=[]; updateHUD(); const ann=document.getElementById('roundAnnounce'); document.getElementById('roundText').textContent=`Round ${round}`; document.getElementById('roundSub').textContent=round===1?'Place your towers! Wave in 3s…':round>=9?'⚠️ ELITE HORDE!':round>=6?'⚠️ Heavy enemies!':'Next wave incoming!'; ann.classList.add('show'); sfxRoundStart(); if(round>1){ const empty=G.hand.map((f,i)=>({f,i})).filter(({f})=>!f); const toFill=Math.min(empty.length,2); for(let k=0;k<toFill;k++) G.hand[empty[k].i]=randomFraction(round); renderHand(); } setTimeout(()=>{ann.classList.remove('show');buildEnemyQueue(round);G.roundActive=true;},3000); }
-  function roundComplete(){ G.roundActive=false; const bonus=G.round*50; G.score+=bonus; updateHUD(); spawnFloatTextCenter(`Round ${G.round} Clear! +${bonus}pts`,'#f7c948'); if(G.round>=G.maxRounds) setTimeout(()=>endGame('victory'),1500); else setTimeout(()=>startRound(G.round+1),2000); }
+  function roundComplete(){ 
+    G.roundActive=false; 
+    const bonus=G.round*50; 
+    G.score+=bonus; 
+    // Add time bonus: 15 seconds per round cleared
+    G.timeLeft = Math.min(G.totalTime, G.timeLeft + 15);
+    updateHUD(); 
+    spawnFloatTextCenter(`Round ${G.round} Clear! +${bonus}pts, +15s`,'#f7c948'); 
+    if(G.round>=G.maxRounds) setTimeout(()=>endGame('victory'),1500); 
+    else setTimeout(()=>startRound(G.round+1),2000); 
+  }
 
   // ─── TIMER ───
   function startTimer(){ clearInterval(G.timerInterval); G.timerInterval=setInterval(()=>{ if(!G.gameActive) return; G.timeLeft--; updateHUD(); if(G.timeLeft<=0) endGame('time-up'); },1000); }
